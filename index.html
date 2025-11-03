@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Search Portal</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(145deg, #dbeafe, #eff6ff);
+      color: #333;
+      text-align: center;
+      padding: 40px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      color: #0078ff;
+      font-size: 2.2em;
+    }
+
+    p {
+      color: #555;
+      font-size: 16px;
+      margin-top: -10px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .section {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      width: 320px;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .section:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    input {
+      padding: 10px;
+      width: 80%;
+      margin: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 15px;
+    }
+
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #005fcc;
+      transform: scale(1.05);
+    }
+
+    .output {
+      margin-top: 15px;
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 8px;
+      min-height: 40px;
+      font-size: 15px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      padding: 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .delete-btn {
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .delete-btn:hover {
+      background-color: #d63030;
+    }
+
+    .found {
+      color: green;
+      font-weight: 600;
+    }
+
+    .not-found {
+      color: red;
+      font-weight: 600;
+    }
+
+    #suggestions {
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      margin: 0 auto;
+      text-align: left;
+      position: relative;
+      z-index: 5;
+      font-size: 14px;
+      color: #333;
+      display: none;
+    }
+
+    #suggestions div {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    #suggestions div:hover {
+      background-color: #e8f0fe;
+    }
+
+    #sgBubble {
+      position: fixed;
+      bottom: 20px;
+      right: 30px;
+      background-color: #0078ff;
+      color: white;
+      font-weight: 600;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      animation: float 4s ease-in-out infinite;
+      user-select: none;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎓 Student Search Portal</h1>
+  <p>Search student records using Binary Search Algorithm</p>
+
+  <div class="container">
+    <div class="section">
+      <h2>Add Students</h2>
+      <input type="text" id="studentInput" placeholder="Enter student name or roll no" onkeyup="handleEnter(event)" />
+      <br>
+      <button onclick="addStudent()">Add</button>
+      <button onclick="sortStudents()">Sort Records</button>
+      <div id="students" class="output">No students added yet.</div>
+    </div>
+
+    <div class="section">
+      <h2>Search Student</h2>
+      <input type="text" id="searchInput" placeholder="Enter name or roll no" oninput="showSuggestions()" />
+      <div id="suggestions"></div>
+      <br>
+      <button onclick="binarySearch()">Search</button>
+      <div id="result" class="output"></div>
+    </div>
+  </div>
+
+  <div id="sgBubble">~SG</div>
+
+  <script>
+    let students = [];
+
+    function addStudent() {
+      const input = document.getElementById("studentInput");
+      const value = input.value.trim();
+      if (value) {
+        students.push(value);
+        input.value = "";
+        showStudents();
+      }
+    }
+
+    function handleEnter(event) {
+      if (event.key === "Enter") addStudent();
+    }
+
+    function showStudents() {
+      const list = students
+        .map(
+          (s, i) => `<li>${s} <button class="delete-btn" onclick="deleteStudent(${i})">Delete</button></li>`
+        )
+        .join("");
+      document.getElementById("students").innerHTML = students.length
+        ? `<b>Students List (${students.length}):</b><ul>${list}</ul>`
+        : "No students added yet.";
+    }
+
+    function deleteStudent(index) {
+      students.splice(index, 1);
+      showStudents();
+    }
+
+    function sortStudents() {
+      if (students.length === 0) {
+        alert("Add some students first!");
+        return;
+      }
+      students.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      showStudents();
+      alert("Records sorted successfully ✅");
+    }
+
+    function showSuggestions() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const suggestionsDiv = document.getElementById("suggestions");
+      suggestionsDiv.innerHTML = "";
+      if (!input) {
+        suggestionsDiv.style.display = "none";
+        return;
+      }
+
+      const matches = students.filter(s => s.toLowerCase().includes(input));
+      if (matches.length > 0) {
+        matches.forEach(s => {
+          const div = document.createElement("div");
+          div.textContent = s;
+          div.onclick = () => {
+            document.getElementById("searchInput").value = s;
+            suggestionsDiv.style.display = "none";
+          };
+          suggestionsDiv.appendChild(div);
+        });
+        suggestionsDiv.style.display = "block";
+      } else {
+        suggestionsDiv.style.display = "none";
+      }
+    }
+
+    function binarySearch() {
+      const key = document.getElementById("searchInput").value.trim().toLowerCase();
+      const resultDiv = document.getElementById("result");
+      document.getElementById("suggestions").style.display = "none";
+
+      if (students.length === 0) {
+        resultDiv.innerHTML = "⚠ No students available. Add and sort records first.";
+        return;
+      }
+
+      if (!key) {
+        resultDiv.innerHTML = "⚠ Please enter a name to search.";
+        return;
+      }
+
+      students.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+      let low = 0, high = students.length - 1;
+      let steps = [];
+      let found = false;
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const midValue = students[mid].toLowerCase();
+
+        steps.push(`🔍 Checking middle index ${mid}: "${students[mid]}"`);
+
+        if (midValue === key) {
+          found = true;
+          steps.push(`<span class="found">✅ Found "${students[mid]}" at position ${mid + 1}.</span>`);
+          break;
+        } else if (midValue < key) {
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      if (!found) {
+        steps.push(`<span class="not-found">❌ "${key}" not found in the list.</span>`);
+      }
+
+      resultDiv.innerHTML = steps.join("<br>");
+    }
+  </script>
+</body>
+</html>
